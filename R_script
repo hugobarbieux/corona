@@ -12,8 +12,10 @@ View(covidworldcases)
 # Script for downloading the Excel file into "R" software
 # These libraries are necessary
 
+install.packages("ggplot2")
 install.packages("gganimate")
 install.packages("transformr")
+install.packages("gifski")
 
 library(readxl)
 library(httr)
@@ -22,6 +24,7 @@ library(ggplot2)
 library(ggthemes)
 library(gganimate)
 library(transformr)
+library(gifski)
 
 #create the URL where the dataset is stored with automatic updates every day
 
@@ -53,43 +56,43 @@ France <- subset(covidworldcases, covidworldcases$"countriesAndTerritories" == "
 France <- France [c(1,5,7)]
 France <- France[order(as.Date(France$dateRep, format="%d/%m/%y")),]
 France[,"cum_sum"] <- cumsum(France$cases)
-France <- subset(France, cum_sum > 0)
+France <- subset(France, cum_sum > 99)
 
 Germany <- subset(covidworldcases, covidworldcases$"countriesAndTerritories" == "Germany")
 Germany <- Germany [c(1,5,7)]
 Germany <- Germany[order(as.Date(Germany$dateRep, format="%d/%m/%y")),]
 Germany[,"cum_sum"] <- cumsum(Germany$cases)
-Germany <- subset(Germany, cum_sum > 0)
+Germany <- subset(Germany, cum_sum > 99)
 
 Italy <- subset(covidworldcases, covidworldcases$"countriesAndTerritories" == "Italy")
 Italy <- Italy [c(1,5,7)]
 Italy <- Italy[order(as.Date(Italy$dateRep, format="%d/%m/%y")),]
 Italy[,"cum_sum"] <- cumsum(Italy$cases)
-Italy <- subset(Italy, cum_sum > 0)
+Italy <- subset(Italy, cum_sum > 99)
 
 Belgium <- subset(covidworldcases, covidworldcases$"countriesAndTerritories" == "Belgium")
 Belgium <- Belgium [c(1,5,7)]
 Belgium <- Belgium[order(as.Date(Belgium$dateRep, format="%d/%m/%y")),]
 Belgium[,"cum_sum"] <- cumsum(Belgium$cases)
-Belgium <- subset(Belgium, cum_sum > 0)
+Belgium <- subset(Belgium, cum_sum > 99)
 
 United_Kingdom <- subset(covidworldcases, covidworldcases$"countriesAndTerritories" == "United_Kingdom")
 United_Kingdom <- United_Kingdom [c(1,5,7)]
 United_Kingdom <- United_Kingdom[order(as.Date(United_Kingdom$dateRep, format="%d/%m/%y")),]
 United_Kingdom[,"cum_sum"] <- cumsum(United_Kingdom$cases)
-United_Kingdom <- subset(United_Kingdom, cum_sum > 0)
+United_Kingdom <- subset(United_Kingdom, cum_sum > 99)
 
 Spain <- subset(covidworldcases, covidworldcases$"countriesAndTerritories" == "Spain")
 Spain <- Spain [c(1,5,7)]
 Spain <- Spain[order(as.Date(Spain$dateRep, format="%d/%m/%y")),]
 Spain[,"cum_sum"] <- cumsum(Spain$cases)
-Spain <- subset(Spain, cum_sum > 0)
+Spain <- subset(Spain, cum_sum > 99)
 
 Sweden <- subset(covidworldcases, covidworldcases$"countriesAndTerritories" == "Sweden")
 Sweden <- Sweden [c(1,5,7)]
 Sweden <- Sweden[order(as.Date(Sweden$dateRep, format="%d/%m/%y")),]
 Sweden[,"cum_sum"] <- cumsum(Sweden$cases)
-Sweden <- subset(Sweden, cum_sum > 0)
+Sweden <- subset(Sweden, cum_sum > 99)
 
 Europe <- rbind(France, Germany, Italy, Belgium, United_Kingdom, Spain, Sweden)
 
@@ -99,24 +102,28 @@ graph1 = Europe %>%
   geom_line(size = 1.5, alpha = 0.8) +
   #geom_line(aes(linetype = isFrance), size = 1.5, alpha = 0.8) +
   labs(title = "Coronavirus pandemic",
-       subtitle = "Contamination numbers accross Europe",
+       subtitle = "Contamination numbers accross Europe since 100 cases reported",
        x = "Date",
        y = "Number of cases",
        color = "Countries") +
   theme_fivethirtyeight() +
   theme(axis.title = element_text()) +
   #scale_linetype_manual(values = c("dashed", "solid"), guide = "none") +
-  scale_color_brewer(palette = "Set1")
+  scale_color_brewer(palette = "Set1") +
+  geom_point()
 
 graph1
 
 graph1.animation = graph1 +
-  transition_time(dateRep) +
-  labs(subtitle = "dateRep: {frame_time}")
+  transition_reveal(dateRep) +
+  #view_follow(fixed_y = TRUE)
 
 graph1.animation
 
-
+animate(graph1.animation, height = 500, width = 800, fps = 30, duration = 7, end_pause = 60, res = 100)
+anim_save("corona_graph.gif")
+#save_animation(graph1.animation, "corona_graph.gif")
+ 
 
 ##########
 # Improve the dataset by importing list of country with region and ISO-2 code
