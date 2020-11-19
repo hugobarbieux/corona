@@ -12,11 +12,20 @@ View(covidworldcases)
 # Script for downloading the Excel file into "R" software
 # These libraries are necessary
 
+install.packages("dplyr")
+install.packages("ggplot2")
+install.packages("gganimate")
+install.packages("transformr")
+install.packages("gifski")
+
 library(readxl)
 library(httr)
 library(dplyr)
 library(ggplot2)
 library(ggthemes)
+library(gganimate)
+library(transformr)
+library(gifski)
 
 #create the URL where the dataset is stored with automatic updates every day
 
@@ -44,38 +53,100 @@ summary(covidworldcases)
 
 ##########
 
+# Subset the dataset by country
+# Keep useful columns
+# Format date column as date and order from latest to newest
+# Calculate cummulative count of cases in a new variable
+# Keep only values greater than 99 (to start since 100 cases reported)
+
+# How to reformat date
+# France$dateRep <- as.Date(France$dateRep, format = "%d/%m/%y")
+# Verify
+# class(France$dateRep)
+
 France <- subset(covidworldcases, covidworldcases$"countriesAndTerritories" == "France")
 France <- France [c(1,5,7)]
 France <- France[order(as.Date(France$dateRep, format="%d/%m/%y")),]
 France[,"cum_sum"] <- cumsum(France$cases)
-France <- subset(France, cum_sum > 0)
+France <- subset(France, cum_sum > 99)
 
 Germany <- subset(covidworldcases, covidworldcases$"countriesAndTerritories" == "Germany")
 Germany <- Germany [c(1,5,7)]
 Germany <- Germany[order(as.Date(Germany$dateRep, format="%d/%m/%y")),]
 Germany[,"cum_sum"] <- cumsum(Germany$cases)
-Germany <- subset(Germany, cum_sum > 0)
+Germany <- subset(Germany, cum_sum > 99)
 
-Europe <- rbind(France, Germany)
+Italy <- subset(covidworldcases, covidworldcases$"countriesAndTerritories" == "Italy")
+Italy <- Italy [c(1,5,7)]
+Italy <- Italy[order(as.Date(Italy$dateRep, format="%d/%m/%y")),]
+Italy[,"cum_sum"] <- cumsum(Italy$cases)
+Italy <- subset(Italy, cum_sum > 99)
 
-Europe %>%
+Belgium <- subset(covidworldcases, covidworldcases$"countriesAndTerritories" == "Belgium")
+Belgium <- Belgium [c(1,5,7)]
+Belgium <- Belgium[order(as.Date(Belgium$dateRep, format="%d/%m/%y")),]
+Belgium[,"cum_sum"] <- cumsum(Belgium$cases)
+Belgium <- subset(Belgium, cum_sum > 99)
+
+United_Kingdom <- subset(covidworldcases, covidworldcases$"countriesAndTerritories" == "United_Kingdom")
+United_Kingdom <- United_Kingdom [c(1,5,7)]
+United_Kingdom <- United_Kingdom[order(as.Date(United_Kingdom$dateRep, format="%d/%m/%y")),]
+United_Kingdom[,"cum_sum"] <- cumsum(United_Kingdom$cases)
+United_Kingdom <- subset(United_Kingdom, cum_sum > 99)
+
+Spain <- subset(covidworldcases, covidworldcases$"countriesAndTerritories" == "Spain")
+Spain <- Spain [c(1,5,7)]
+Spain <- Spain[order(as.Date(Spain$dateRep, format="%d/%m/%y")),]
+Spain[,"cum_sum"] <- cumsum(Spain$cases)
+Spain <- subset(Spain, cum_sum > 99)
+
+Sweden <- subset(covidworldcases, covidworldcases$"countriesAndTerritories" == "Sweden")
+Sweden <- Sweden [c(1,5,7)]
+Sweden <- Sweden[order(as.Date(Sweden$dateRep, format="%d/%m/%y")),]
+Sweden[,"cum_sum"] <- cumsum(Sweden$cases)
+Sweden <- subset(Sweden, cum_sum > 99)
+
+# Gather data in a single variable
+Europe <- rbind(France, Germany, Italy, Belgium, United_Kingdom, Spain, Sweden)
+
+# Make a line graph
+
+graph1 = Europe %>%
+  #mutate(isFrance = (countriesAndTerritories == "France")) %>%
   ggplot(aes(x = dateRep, y = cum_sum, color = countriesAndTerritories)) +
   geom_line(size = 1.5, alpha = 0.8) +
-  labs(title = "Crise du coronavirus",
-       subtitle = "Nrb de contaminations en Europe",
+  #geom_line(aes(linetype = isFrance), size = 1.5, alpha = 0.8) +
+  labs(title = "Coronavirus pandemic",
+       subtitle = "Contamination numbers accross Europe since 100 cases reported",
        x = "Date",
-       y = "Nbr de cas",
-       color = "Pays") +
+       y = "Number of cases",
+       color = "Countries") +
   theme_fivethirtyeight() +
   theme(axis.title = element_text()) +
-  scale_color_brewer(palette = "Set1")
+  #scale_linetype_manual(values = c("dashed", "solid"), guide = "none") +
+  scale_color_brewer(palette = "Set1") +
+  geom_point()
 
+graph1
 
+# Animate it
 
+graph1.animation = graph1 +
+  transition_reveal(dateRep) +
+  view_follow(fixed_y = TRUE)
 
-##########
+graph1.animation
+
+animate(graph1.animation, height = 500, width = 800, fps = 30, duration = 7, end_pause = 60, res = 100)
+anim_save("corona_graph.gif")
+#save_animation(graph1.animation, "corona_graph.gif")
+ 
+
+##### OBSOLETE CODE #####
+
 # Improve the dataset by importing list of country with region and ISO-2 code
-##### ! SINCE THEN THE DATASET HAS BEEN UPGRADED WITH MORE COLUMNS SUCH AS ISO-2 CODE ANS POPULATION ! #####
+
+##### SINCE THE DATASET HAS BEEN UPGRADED WITH MORE COLUMNS SUCH AS ISO-2 CODE ANS POPULATION, THIS STEP IS NOT ANYMORE USEFUL #####
 
 countrieslist <- read.csv("countrieslist.csv")
 View(countrieslist)
@@ -117,91 +188,3 @@ barplot(height = deathsbycountry)
 # Export "pivot" to use it with any visualisation program
 write.csv(casesbycountry, file='cases_by_country.csv')
 write.csv(deathsbycountry, file = "deaths_by_country.csv")
-
-
-
-##### OBSOLETE CODE #####
-
-# Reformat date
-France$dateRep <- as.Date(France$dateRep, format = "%d/%m/%y")
-class(France$dateRep)
-
-# Subset the dataset by country
-# Keep useful columns
-# Make cummulative count
-# Keep only values greater than 0 (to begin the day the first death is recorded)
-
-Algeria <- subset(covidworldcasesplusregion, covidworldcasesplusregion$"countriesAndTerritories" == "Algeria")
-Algeria <- Algeria [c(3,8,9)]
-Algeria <- Algeria [order(Algeria$dateRep),]
-Algeria <- cumsum(Algeria[, 2])
-Algeria <- subset(Algeria, Algeria > 0)
-View(Algeria)
-write.csv(Algeria, file = "Algeria.csv")
-
-Egypt <- subset(covidworldcasesplusregion, covidworldcasesplusregion$"countriesAndTerritories" == "Egypt")
-Egypt <- Egypt [c(3,8,9)]
-Egypt <- Egypt[order(Egypt$dateRep),]
-Egypt <- cumsum(Egypt[, 2])
-Egypt <- subset(Egypt, Egypt > 0)
-View(Egypt)
-write.csv(Egypt, file = "Egypt.csv")
-
-China <- subset(covidworldcasesplusregion, covidworldcasesplusregion$"countriesAndTerritories" == "China")
-China <- China [c(3,8,9)]
-China <- China[order(China$dateRep),]
-China <- cumsum(China[, 2])
-China <- subset(China, China > 0)
-write.csv(China, file="China.csv")
-
-Italy <- subset(covidworldcasesplusregion, covidworldcasesplusregion$"countriesAndTerritories" == "Italy")
-Italy <- Italy [c(3,8,9)]
-Italy <- Italy[order(Italy$dateRep),]
-Italy <- cumsum(Italy[, 2])
-Italy <- subset(Italy, Italy > 0)
-write.csv(Italy, file="Italy.csv")
-
-France <- subset(covidworldcasesplusregion, covidworldcasesplusregion$"countriesAndTerritories" == "France")
-View(France)
-France <- France [c(3,8,9)]
-France <- France[order(France$dateRep),]
-France <- cumsum(France[, 2])
-France <- subset(France, France > 0)
-write.csv(France, file="France.csv")
-
-United_Kingdom <- subset(covidworldcasesplusregion, covidworldcasesplusregion$"countriesAndTerritories" == "United_Kingdom")
-United_Kingdom <- United_Kingdom [c(3,8,9)]
-United_Kingdom <- United_Kingdom[order(United_Kingdom$dateRep),]
-United_Kingdom <- cumsum(United_Kingdom[, 2])
-United_Kingdom <- subset(United_Kingdom, United_Kingdom > 0)
-write.csv(United_Kingdom, file="United_Kingdom.csv")
-
-United_States <- subset(covidworldcasesplusregion, covidworldcasesplusregion$"countriesAndTerritories" == "United_States_of_America")
-United_States <- United_States [c(3,8,9)]
-United_States <- United_States[order(United_States$dateRep),]
-United_States <- cumsum(United_States[, 2])
-United_States <- subset(United_States, United_States > 0)
-write.csv(United_States, file="United_States.csv")
-
-Spain <- subset(covidworldcasesplusregion, covidworldcasesplusregion$"countriesAndTerritories" == "Spain")
-Spain <- Spain [c(3,8,9)]
-Spain <- Spain[order(Spain$dateRep),]
-Spain <- cumsum(Spain[, 2])
-Spain <- subset(Spain, Spain > 0)
-write.csv(Spain, file="Spain.csv")
-
-Germany <- subset(covidworldcasesplusregion, covidworldcasesplusregion$"countriesAndTerritories" == "Germany")
-Germany <- Germany [c(3,8,9)]
-Germany <- Germany[order(Germany$dateRep),]
-Germany <- cumsum(Germany[, 2])
-Germany <- subset(Germany, Germany > 0)
-write.csv(Germany, file="Germany.csv")
-
-##########
-
-ThreeCountries <- rbind(Italy, France, United_Kingdom)
-View(ThreeCountries)
-write.csv(ThreeCountries, file="threecountries.csv")
-
-##########
-
