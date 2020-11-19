@@ -56,7 +56,7 @@ summary(covidworldcases)
 # Subset the dataset by country
 # Keep useful columns
 # Format date column as date and order from latest to newest
-# Make a cummulative count od cases in a new variable
+# Calculate cummulative count of cases in a new variable
 # Keep only values greater than 99 (to start since 100 cases reported)
 
 # How to reformat date
